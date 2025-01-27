@@ -10,4 +10,4 @@ list_xml=root.xpath("/html/body/ul/li")#相对查找
 for l in list_xml:
     ans=l.xpath("./a/text()")
     print(ans,end=' ')
-    print(l.xpath("./a/@href"))#
+    print(l.xpath("./a/@href"))#获取属性值
