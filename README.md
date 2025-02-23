@@ -752,3 +752,315 @@ resp.close()
 
 ```
 
+# 三.requests进阶
+
+模拟浏览器登录-处理cookie；防盗链处理；代理
+
+## 1.处理cookie
+
+登录获取`cookie`，带着`cookie`再获得`url`
+
+启用断点，保存日志
+
+```python
+import requests
+
+
+#session会话，cookie不丢失
+session=requests.session()
+header={
+    "origin":"https://passport.17k.com",
+    "referer":"https://passport.17k.com/login/",
+    "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
+}
+
+data={
+    "loginName": "18250927959",
+    "password": "chenhezhuma1"
+}
+
+url="https://passport.17k.com/ck/user/login"
+resp=session.post(url,data=data,headers=header)
+print(resp.cookies)
+
+
+#2.直接获取到cookie给程序
+url="https://user.17k.com/ck/author2/shelf?page=1&appKey=2406394919"
+cookie="GUID=344bac05-ed7a-4a04-9648-8f897ff38af9; sajssdk_2015_cross_new_user=1; c_channel=0; c_csc=web; accessToken=avatarUrl%3Dhttps%253A%252F%252Fcdn.static.17k.com%252Fuser%252Favatar%252F12%252F12%252F30%252F103983012.jpg-88x88%253Fv%253D1738486407000%26id%3D103983012%26nickname%3Dbilibili111%26e%3D1754040296%26s%3D5d9fd296288f79ab; tfstk=gj7oZlgIGg-7fm6tet87fVct-yqvNbTBc93ppepU0KJXp79Je6Wht1-ea4WRmpXVnL8pyaUhxK8yAgppepYhOOVYBPUON_TBbReTWFSYUsY6abJrpnk2TeAPmynay_TB8-E1OxMPNOrjatFH8SY2tBuy82We0IJXOBkyT4PcgK9qzBRr8j52_Coy8eWFgSAB3QkseD9GFOQ4nmoA3EjfdZAkqd50fq0qfQk9L_Jo82JkZ3mcaK0E8ZjYWhdBUlGvdUp5NQXQ54TyxM7Juay48FS1nwxwSkFW7a1FfM5jEWvPMT_MzN2oyIKHEi7ymXueuEIybMXuE09P2tx6gnl35IB93__PmWMVaOpkzI-Y75f2YiQWfaeqrFS1wUIFQ-nJUGAF47nqbIfjRIPdoDiB4IODBq1JkCdXpKDYiSm_u3RXNrV0iDiB4IODBSVmfr-yGQac.; sensorsdata2015jssdkcross=%7B%22distinct_id%22%3A%22103983012%22%2C%22%24device_id%22%3A%22194c5dc67b5fc6-0f7f26b4b5a356-26011b51-1821369-194c5dc67b61e32%22%2C%22props%22%3A%7B%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_referrer%22%3A%22%22%2C%22%24latest_referrer_host%22%3A%22%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%7D%2C%22first_id%22%3A%22344bac05-ed7a-4a04-9648-8f897ff38af9%22%7D; acw_sc__v2=679f506d879617ea2c360070b7bd0701de6f36cc; Hm_lvt_9793f42b498361373512340937deb2a0=1738486344,1738494067; HMACCOUNT=BE7DBABC5B2E8C13; ssxmod_itna=YqRx2C0QoCqrDXKDHD0Q5iqdx0xiq2HPG=aeQK8Ko8DlODWqeGzDAxn40iDtxhVETPoaKeLbj7Ut98TPK03xcoWr3LB87KDHxY=DUpYuGhD4+5GwD0eG+DD4DWDmnHDnxAQDjxGPyn2v5CDYPDEB5DRcPDu=AhDGc1Uh9hDeKD0OTHDQI+2axDBahAaWKqpahhDiWH5zvIcpifK7GkD7v+DlaQBFhkFIMUanHf2tdhUGKDXpQDvpHmnEge2Zvze325UQ05iAa5iAedKnhYamDoCNGo1ibq+=e4ksnx20GK1ssPDDpxaAbKKiDD==; ssxmod_itna2=YqRx2C0QoCqrDXKDHD0Q5iqdx0xiq2HPG=aeQK8KoD6ctlZ2D0vrrP03Dcl2Mn2FtqqTWhKGFKmkE2m1KSkvhme+RMYR1qcpGWRpiTQGIt2ebbeS5fSYtATFbgiIYyBniLsVdROn6uLm9OEUb7isS+QV9SIMA4oqnoIM/GIxF4uM9hI1GRDsbGTb3jRtvTEMtbKSeMi=rbQtpmt5OwKZ7hNh+cWpjqoLe=o5Awh=TkD1+CUejQRNDzGw13bXAqUMtQ9w6Fa08WkkFuWblxWTOORiv64snCx87BuIESw0ev9pYgiA8IuLOGIPmNDPp15RW0hYKRe0Uipq9mqEq1jw/Q+8Z0xrepe3Y1wpP4mPE3eRUmPKjjxjpeGItbvgi+X7G6B5e9o3/At6N1RGucmOPuMBbnrLf6wwoLx6pU0oKpwI/m82wXDQsW0dh6kfRkSq6CubrYYRmP8o1Cc8C9CGcpCanYWv1olcG2rFlBYPrwgA2peEcbKyePdgY2lpjOWqMN0/U1rd1iGP==SBr0A5fpP4h6AfmCcmPc6IWwWgy=DEUPYrvLrFfeDoLjvFIeMCF+tcxi4t6Q+72jSy2em/99wnH+7GkWKk5wFDG2mnQte6i22Y2vC55jxrmztAztbxDFqD+axxD===; Hm_lpvt_9793f42b498361373512340937deb2a0=1738494183"
+resp=requests.get(url,headers={
+    "Cookie":cookie
+})
+print(resp.text)
+resp.close()
+```
+
+
+
+## 2.处理防盗链
+
+防盗链：referer，溯源
+
+在抓包工具中获取到对应视频流信息。会对视频流进行加工
+
+受到了防盗链机制的保护。播放链接通常会经过服务器验证，确保只有通过正规途径的请求才能访问视频资源。
+
+①.从原`url`中获取到视频编号`countID` ②.从`videostatus`中将获得的`src-url`中部分，替换为编号
+
+```python
+import requests
+from lxml import etree
+import re
+
+
+paUrl="https://www.pearvideo.com/"
+resp=requests.get(paUrl)
+
+root=etree.HTML(resp.text)
+
+sonPartUrl=root.xpath("/html/body/div[2]/div/div[2]/div//div/a/@href")
+resp.close()
+
+for sUrl in sonPartUrl:
+    if re.match("video.*",sUrl):
+        sonUrl=paUrl+sUrl#获取到子地址
+        
+        #获取视频编号
+        conId=sonUrl.split("_")[1]
+        
+        videostatueUrl=f"https://www.pearvideo.com/videoStatus.jsp?contId={conId}"
+
+        #加入防盗链
+        header={
+            "referer":sonUrl
+        }
+        resp=requests.get(videostatueUrl,headers=header)
+        #获取视频信息用字典表示
+        dic=resp.json()
+        srcUrl=dic["videoInfo"]["videos"]["srcUrl"]
+        systemTime=dic["systemTime"]
+
+        trursrcUrl=srcUrl.replace(systemTime,f"cont-{conId}")
+        print(trursrcUrl)
+
+        #以二进制进行写入
+        time=1
+        try:
+            print(f"正在下载视频{conId},这是第{time}次尝试...")
+            with open(f"./梨视频/视频{conId}.mp4",mode='wb') as f:
+                f.write(requests.get(trursrcUrl).content)
+            print("下载完成")
+        except:
+            if time==3:
+                print("下载失败")
+            time+=1
+            print("重新进行尝试")
+        resp.close()
+
+        
+```
+
+
+
+## 3.代理
+
+使用代理服务器在客户端和目标服务器之间起到"代理"的作用，能够处理网络请求和响应的各种任务
+
+```python
+import requests
+
+proxies={
+   "https":"180.103.181.10"
+}
+
+resp=requests.get("https://www.baidu.com",proxies=proxies)
+resp.encoding='utf-8'
+print(resp)
+
+```
+
+## 实例：爬取网易云评论
+
+①.从网络中捕获并提取包含评论信息的数据包。
+
+②.从堆栈中定位并获取未加密前的原始参数
+
+![image-20250211152437126](C:\Users\17677\AppData\Roaming\Typora\typora-user-images\image-20250211152437126.png)
+
+③.处理加密过程
+
+![image-20250211152858788](C:\Users\17677\AppData\Roaming\Typora\typora-user-images\image-20250211152858788.png)
+
+a函数：产生16位随机字符串列，b函数为加密函数：`a`为加密文本，`b`为加密秘钥，对实参中g,i为定值秘钥
+
+通过固定i值来获取到对应`params`和`encSecKey`
+
+```python
+import requests
+from Crypto.Cipher import AES
+from base64 import b64encode
+import json
+url="https://music.163.com/weapi/comment/resource/comments/get?csrf_token="
+
+
+data={
+    "rid": "R_SO_4_2668124242",
+    "threadId": "R_SO_4_2668124242",
+    "pageNo": "1",
+    "pageSize": "20",
+    "cursor": "-1",
+    "offset": "0",
+    "orderType": "1",
+    "csrf_token": ""
+}
+#模拟加密过程
+
+e='010001'
+f='0085ddee518103f1aef177d3031a0b2fbf1595fb7d5c70afabcc3f356e0bdede8b2e40adc751df9ece1a62750ad1d9cdff976ead0a6f992b16a22abf1339e2b644fddfde23271723e113712c03a07c770be3a251d5a49fd1a9745acb8cabafefcd1c65d4d1409f5f0243a4587a6ded88802afc0a57f23f641a26cbacb4fdd6bf3f'
+g='0CoJUm6Qyw8W8jud'
+
+#取i为定值可以获得固定的encSacKey
+i='SODmjau7C0M4YoM9'
+iv="0102030405060708"#偏移量
+def get_encSacKey():
+    return '589a067630547fe842ef7729a1186321ffb0a2c7555eb0d5d74cdb35c5ffd550ecf766ae9cb2cafd37418e75988531d61b4fbe64843327b19576dec81e2c8a5af442792c6b4860cd5041ea3147c9faa39e41ab57a33feeedde3923e470d5b36add8b55d976ff1d3789a32c7f996b351e101d105ce040826419a0d4a1fd9cb116'
+
+#加密函数，对应d函数
+def get_params(data):#data对应着数据的字符串
+    f=enc_params(data,g)
+    s=enc_params(f,i)
+    return s
+#每一次的加密
+def enc_params(data,key):
+    obj=AES.new(key=key.encode("utf-8"),mode=AES.MODE_CBC ,iv=iv.encode("utf-8"))#创建加密器
+    
+    data=to_16(data)
+    
+    bs=obj.encrypt(data.encode("utf-8"))#获取加密字节,加密的长度必须为16倍数
+    #将加密字节转换为能被utf-8识别并转换成字符串
+    return str(b64encode(bs),"utf-8")
+
+
+#转换字符串,拉长至16位
+def to_16(data):
+    pad=16-len(data)%16
+    data+=chr(pad)*pad
+    return data
+"""
+def new(key, mode, *args, **kwargs):
+    Create a new AES cipher.
+    Args:
+      key(bytes/bytearray/memoryview):
+        The secret key to use in the symmetric cipher.
+        It must be 16 (*AES-128)*, 24 (*AES-192*) or 32 (*AES-256*) bytes long.
+                For ``MODE_SIV`` only, it doubles to 32, 48, or 64 bytes.
+      mode (a ``MODE_*`` constant):
+        The chaining mode to use for encryption or decryption.
+        If in doubt, use ``MODE_EAX``.
+
+    Keyword Args:
+      iv (bytes/bytearray/memoryview):偏移量
+        (Only applicable for ``MODE_CBC``, ``MODE_CFB``, ``MODE_OFB``,
+        and ``MODE_OPENPGP`` modes).
+
+        The initialization vector to use for encryption or decryption.
+
+        For ``MODE_CBC``, ``MODE_CFB``, and ``MODE_OFB`` it must be 16 bytes long
+"""
+
+'''
+params
+encSacKey
+'''
+
+
+'''
+function(json.stringrify(data),010001,'0085ddee518103f1aef177d3031a0b2fbf1595fb7d5c70afab
+cc3f356e0bdede8b2e40adc751df9ece1a62750ad1d9cdff976ead0a6f992b16a22abf1339e2b644fddfde232
+71723e113712c03a07c770be3a251d5a49fd1a9745acb8cabafefcd1c65d4d1409f5f0243a4587a6ded88802a
+fc0a57f23f641a26cbacb4fdd6bf3f' ,0CoJUm6Qyw8W8jud )
+'''
+
+resp=requests.post(url,data={
+    "params":get_params(json.dumps(data)),#需要将data从字典转换成json字符串,Python 对象（如字典、列表、字符串等）序列化为 JSON 格式的字符串
+    "encSecKey":get_encSacKey()
+})
+print(resp.text)
+```
+
+# 四.爬取提速
+
+多进程，多线程，协程
+
+进程是资源单位，线程是执行单位
+
+## 线程
+
+```python
+from threading import Thread
+
+#start安排新线程来执行run
+
+#使用target参数
+def func():
+    for i in range(20):
+        print("func",i)
+
+if __name__=="__main__":
+    t=Thread(target=func)
+    t.start()
+    for i in range(20):
+        print("main",i)
+
+#重写run方法
+class myThread(Thread):
+    def run(self):
+        for i in range(20):
+            print("func",i)
+
+if __name__=="__main__":
+    t=myThread()
+    t.start()
+    for i in range(20):
+        print("main",i)
+```
+
+## 进程
+
+```python
+from multiprocessing import Process
+import time
+#创建进程和线程的api高度相似
+def func(a1):
+    for i in range(100):
+        print(f"子进程{a1}",i)
+
+if __name__=="__main__":
+    p=Process(target=func,args=("poppy",))#传参
+    p.start()
+    #time.sleep(1)由于进程启动的开销，子进程在加载过程中主进程先进行
+    for i in range(100):
+        print("主进程",i)
+```
+
+## 线程池和进程池
+
+一次性开辟线程和进程，用户直接给线程/进程池提交任务，调度全部交给线程池调度。
+
+### 简单的程序
+
+```python
+from concurrent.futures import ThreadPoolExecutor,ProcessPoolExecutor
+
+def fn(name):
+    for i in range(100):
+        print(name,i)
+
+if __name__=='__main__':
+    #创建线程池
+    with ThreadPoolExecutor(50) as t:
+        for i in range(100):#将100个任务交给线程池
+            t.submit(fn,name=f"任务{i}")
+    #等待线程池任务全部执行完毕
+    print("over")
+```
+
